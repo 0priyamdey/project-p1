@@ -1,49 +1,29 @@
-name: Trigger auto deployment for priyam-p1-app
+name: Build and Deploy to Azure Container Apps
 
-# When this action will be executed
 on:
-  # Automatically trigger it when detected changes in repo
   push:
-    branches: 
-      [ main ]
-    paths:
-    - '**'
-    - '.github/workflows/priyam-p1-app-AutoDeployTrigger-29b2c5d1-e05b-4959-bedf-cc9df7e9cd79.yml'
-
-  # Allow manual trigger 
-  workflow_dispatch:      
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    permissions: 
-      id-token: write #This is required for requesting the OIDC JWT Token
-      contents: read #Required when GH token is used to authenticate with private repo
-
     steps:
-      - name: Checkout to the branch
-        uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.PRIYAMP1APP_AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.PRIYAMP1APP_AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.PRIYAMP1APP_AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Build and push container image to registry
+      - name: Build, push, and deploy to Container Apps
         uses: azure/container-apps-deploy-action@v2
         with:
           appSourcePath: ${{ github.workspace }}
-          _dockerfilePathKey_: _dockerfilePath_
-          _targetLabelKey_: _targetLabel_
+          dockerfilePath: Dockerfile
           registryUrl: priyamp117112002.azurecr.io
           registryUsername: ${{ secrets.PRIYAMP1APP_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.PRIYAMP1APP_REGISTRY_PASSWORD }}
           containerAppName: priyam-p1-app
           resourceGroup: priyam-p1
           imageToBuild: priyamp117112002.azurecr.io/priyam-p1-app:${{ github.sha }}
-          _buildArgumentsKey_: |
-            _buildArgumentsValues_
-
-
